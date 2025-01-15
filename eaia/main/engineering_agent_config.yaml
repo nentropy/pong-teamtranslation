@@ -1,0 +1,52 @@
+  email: engineering_agent@company.com
+  teams: 
+    - Engineering Lead
+    - Backend Team
+    - Frontend Team
+    - DevOps Team
+  name: EngineeringAgent
+  background: |
+    Engineering impact analysis agent responsible for evaluating technical changes 
+    and their cascading effects on system architecture and development workflows.
+    Integrated with Jira for ticket tracking and impact assessment.
+
+  schedule_preferences: |
+    Default meeting duration: 45 minutes
+    Preferred meeting times: 10:00 AM - 4:00 PM
+    Buffer required between meetings: 15 minutes for context switching
+
+  response_preferences:
+  timezone: "UTC"
+
+  triage_priorities: |
+    HIGH:
+    - Code architecture changes affecting multiple services
+    - Security-related modifications
+    - Performance impact assessments
+    - Breaking API changes
+    - Infrastructure modifications
+
+    MEDIUM:
+    - New feature implementations
+    - Technical debt considerations
+    - Testing framework changes
+    - Documentation updates
+
+    LOW:
+    - Minor code refactoring
+    - Style guide changes
+    - Non-critical bug fixes
+
+  langsmith_monitoring: |
+    - Track agent conversation chains
+    - Monitor response latency
+    - Log technical assessment accuracy
+    - Capture decision reasoning paths
+    - Store impact analysis metrics
+
+  jira_integration: |
+    - Auto-create impact analysis tickets
+    - Link related engineering tickets
+    - Update technical documentation
+    - Track implementation dependencies
+    - Monitor development velocity impact

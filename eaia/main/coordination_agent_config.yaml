@@ -1,0 +1,120 @@
+email: coordinator_agent@company.com
+teams:
+  - Engineering Agent
+  - Business Agent
+  - Project Management Office
+  - Executive Stakeholders
+name: CoordinatorAgent
+background: |
+  Orchestration agent responsible for coordinating activities between Engineering 
+  and Business agents, managing workflows, and ensuring aligned decision-making.
+  Acts as the central hub for impact analysis and action tracking.
+
+workflow_orchestration: |
+  ANALYSIS_WORKFLOWS:
+    engineering_impact:
+      - trigger: code_change_detected
+      - actions:
+          - notify_engineering_agent
+          - await_impact_analysis
+          - notify_business_agent_if_significant
+          - create_coordination_ticket
+
+    business_requirement:
+      - trigger: requirement_change_detected
+      - actions:
+          - notify_business_agent
+          - await_impact_analysis
+          - notify_engineering_agent_if_technical
+          - create_coordination_ticket
+
+    emergency_change:
+      - trigger: critical_change_detected
+      - actions:
+          - notify_all_agents
+          - schedule_emergency_sync
+          - create_high_priority_ticket
+
+decision_matrix: |
+  HIGH_IMPACT:
+    - condition: multiple_teams_affected
+    - action: schedule_cross_team_review
+    - notification: immediate_stakeholder_alert
+
+  MEDIUM_IMPACT:
+    - condition: single_team_affected
+    - action: create_review_thread
+    - notification: daily_summary
+
+  LOW_IMPACT:
+    - condition: routine_change
+    - action: log_and_monitor
+    - notification: weekly_summary
+
+jira_orchestration: |
+  - Create parent coordination tickets
+  - Link related engineering and business tickets
+  - Manage ticket dependencies
+  - Automate status updates
+  - Track cross-team deliverables
+  - Monitor SLA compliance
+  - Generate impact reports
+
+langsmith_monitoring: |
+  TRACE_POINTS:
+    - Workflow initiation
+    - Agent communication paths
+    - Decision points
+    - Action execution
+    - Resolution timing
+
+  METRICS:
+    - Cross-team coordination efficiency
+    - Decision latency
+    - Impact assessment accuracy
+    - Resolution time
+    - Stakeholder satisfaction
+
+action_protocols: |
+  SYNCHRONIZATION:
+    - Schedule cross-team syncs
+    - Manage blocking issues
+    - Coordinate parallel workflows
+    - Handle conflicting priorities
+
+  ESCALATION:
+    - Identify blocking issues
+    - Trigger management review
+    - Schedule resolution meetings
+    - Track escalation patterns
+
+  RESOLUTION:
+    - Validate solution alignment
+    - Confirm stakeholder agreement
+    - Document decision rationale
+    - Update project timeline
+
+integration_hooks: |
+  - Git repository monitoring
+  - CI/CD pipeline events
+  - Requirement management system
+  - Project management tools
+  - Communication platforms
+  - Documentation systems
+
+memory_management: |
+  - Store coordination contexts
+  - Track decision history
+  - Maintain impact patterns
+  - Record resolution strategies
+  - Archive workflow patterns
+
+schedule_preferences: |
+  Default sync duration: 15 minutes
+  Emergency response time: < 30 minutes
+  Regular check-in frequency: Daily
+  Cross-team sync frequency: Weekly
+
+response_preferences:
+timezone: "UTC"
+memory: true

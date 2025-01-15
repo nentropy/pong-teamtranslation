@@ -1,177 +1,163 @@
-# Executive AI Assistant
+# Pong - Team Translation Agent
 
-Executive AI Assistant (EAIA) is an AI agent that attempts to do the job of an Executive Assistant (EA).
+Pong is an AI-powered coordination system that bridges the communication gap between Engineering and Business teams. It analyzes changes, translates their impact across domains, and ensures effective cross-team collaboration.
 
-For a hosted version of EAIA, see documentation [here](https://mirror-feeling-d80.notion.site/How-to-hire-and-communicate-with-an-AI-Email-Assistant-177808527b17803289cad9e323d0be89?pvs=4).
+For a hosted version of Pong, see documentation [here].
 
-Table of contents
+## Table of Contents
 
 - [General Setup](#general-setup)
-  - [Env](#env)
-  - [Credentials](#env)
+  - [Environment](#environment)
+  - [Credentials](#credentials)
   - [Configuration](#configuration)
-- [Run locally](#run-locally)
-  - [Setup EAIA](#set-up-eaia-locally)
-  - [Ingest emails](#ingest-emails-locally)
-  - [Connect to Agent Inbox](#set-up-agent-inbox-with-local-eaia)
-  - [Use Agent Inbox](#use-agent-inbox)
-- [Run in production (LangGraph Cloud)](#run-in-production--langgraph-cloud-)
-  - [Setup EAIA on LangGraph Cloud](#set-up-eaia-on-langgraph-cloud)
-  - [Ingest manually](#ingest-manually)
-  - [Set up cron job](#set-up-cron-job)
+- [Run Locally](#run-locally)
+  - [Setup Pong](#setup-pong)
+  - [Process Changes](#process-changes)
+  - [Connect to Agent Inbox](#connect-to-agent-inbox)
+- [Run in Production](#run-in-production)
+  - [Setup on LangGraph Cloud](#setup-on-langgraph-cloud)
+  - [Configure Automated Analysis](#configure-automated-analysis)
+  - [Set up Monitoring](#set-up-monitoring)
+- [Agent Configuration](#agent-configuration)
+  - [Engineering Agent](#engineering-agent)
+  - [Business Agent](#business-agent)
+  - [Coordination Agent](#coordination-agent)
 
 ## General Setup
 
-### Env
+### Environment
 
-1. Fork and then clone this repo. Note: make sure to fork it first, as in order to deploy this you will need your own repo.
-2. Create a Python virtualenv and activate it (e.g. `pyenv virtualenv 3.11.1 eaia`, `pyenv activate eaia`)
-3. Run `pip install -e .` to install dependencies and the package
+1. Fork and clone this repo
+2. Create a Python virtualenv and activate it (e.g. `pyenv virtualenv 3.11.1 pong`, `pyenv activate pong`)
+3. Run `pip install -e .` to install dependencies
 
-### Set up credentials
+### Credentials
 
 1. Export OpenAI API key (`export OPENAI_API_KEY=...`)
 2. Export Anthropic API key (`export ANTHROPIC_API_KEY=...`)
-3. Enable Google
-   1. [Enable the API](https://developers.google.com/gmail/api/quickstart/python#enable_the_api)
-      - Enable Gmail API if not already by clicking the blue button `Enable the API`
-   2. [Authorize credentials for a desktop application](https://developers.google.com/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application)
-      1. Download the client secret. After that, run these commands:
-      2. `mkdir eaia/.secrets` - This will create a folder for secrets
-      3. `mv ${PATH-TO-CLIENT-SECRET.JSON} eaia/.secrets/secrets.json` - This will move the client secret you just created to that secrets folder
-      4. `python scripts/setup_gmail.py` - This will generate another file at `eaia/.secrets/token.json` for accessing Google services.
-4. Export LangSmith API key (`export LANGSMITH_API_KEY`)
+3. Configure Jira Access:
+   - Create API token in Jira
+   - Set environment variables:
+     ```bash
+     export JIRA_EMAIL=...
+     export JIRA_API_TOKEN=...
+     export JIRA_URL=...
+     ```
+4. Export LangSmith API key (`export LANGSMITH_API_KEY=...`)
 
 ### Configuration
 
-The configuration for EAIA can be found in `eaia/main/config.yaml`. Every key in there is required. These are the configuration options:
+Configuration files for Pong can be found in `configs/`:
 
-- `email`: Email to monitor and send emails as. This should match the credentials you loaded above.
-- `full_name`: Full name of user
-- `name`: First name of user
-- `background`: Basic info on who the user is
-- `timezone`: Default timezone the user is in
-- `schedule_preferences`: Any preferences for how calendar meetings are scheduled. E.g. length, name of meetings, etc
-- `background_preferences`: Any background information that may be needed when responding to emails. E.g. coworkers to loop in, etc.
-- `response_preferences`: Any preferences for what information to include in emails. E.g. whether to send calendly links, etc.
-- `rewrite_preferences`: Any preferences for the tone of your emails
-- `triage_no`: Guidelines for when emails should be ignored
-- `triage_notify`: Guidelines for when user should be notified of emails (but EAIA should not attempt to draft a response)
-- `triage_email`: Guidelines for when EAIA should try to draft a response to an email
+- `engineering_agent_config.yaml`: Technical impact analysis settings
+- `business_agent_config.yaml`: Business impact analysis settings
+- `coordination_agent_config.yaml`: Cross-team coordination settings
 
-## Run locally
+Required configuration for each agent includes:
+- Team composition
+- Impact analysis preferences
+- Response protocols
+- Jira integration settings
+- LangSmith monitoring preferences
 
-You can run EAIA locally.
-This is useful for testing it out, but when wanting to use it for real you will need to have it always running (to run the cron job to check for emails).
-See [this section](#run-in-production--langgraph-cloud-) for instructions on how to run in production (on LangGraph Cloud)
+## Run Locally
 
-### Set up EAIA locally
+You can run Pong locally for testing before deploying to production.
 
-1. Install development server `pip install -U "langgraph-cli[inmem]"`
-2. Run development server `langgraph dev`
+### Setup Pong
 
-### Ingest Emails Locally
+1. Install development server: `pip install -U "langgraph-cli[inmem]"`
+2. Run development server: `langgraph dev`
 
-Let's now kick off an ingest job to ingest some emails and run them through our local EAIA.
+### Process Changes
 
-Leave the `langgraph dev` command running, and open a new terminal. From there, get back into this directory and virtual environment. To kick off an ingest job, run:
+To analyze changes locally:
 
-```shell
-python scripts/run_ingest.py --minutes-since 120 --rerun 1 --early 0
+```bash
+python scripts/process_changes.py \
+  --source [engineering|business] \
+  --type [code|requirement] \
+  --description "Change description" \
+  --priority [High|Medium|Low]
 ```
 
-This will ingest all emails in the last 120 minutes (`--minutes-since`). It will NOT break early if it sees an email it already saw (`--early 0`) and it will
-rerun ones it has seen before (`--rerun 1`). It will run against the local instance we have running.
+### Connect to Agent Inbox
 
-### Set up Agent Inbox with Local EAIA
+1. Go to Agent Inbox
+2. Configure local connection:
+   - Click Settings
+   - Input LangSmith API key
+   - Add new inbox
+   - Set Assistant/Graph ID to "pong"
+   - Set URL to `http://127.0.0.1:2024`
+   - Name it "Local Pong"
 
-After we have [run it locally](#run-locally), we can interract with any results.
+## Run in Production
 
-1. Go to [Agent Inbox](https://dev.agentinbox.ai/)
-2. Connect this to your locally running EAIA agent:
-   1. Click into `Settings`
-   2. Input your LangSmith API key.
-   3. Click `Add Inbox`
-      1. Set `Assistant/Graph ID` to `main`
-      2. Set `Deployment URL` to `http://127.0.0.1:2024`
-      3. Give it a name like `Local EAIA`
-      4. Press `Submit`
+### Setup on LangGraph Cloud
 
-You can now interract with EAIA in the Agent Inbox.
+1. Access LangSmith Plus account
+2. Navigate to deployments
+3. Create new deployment:
+   - Connect to GitHub repo
+   - Name it "Pong-Team-Translation"
+   - Add environment variables:
+     - OPENAI_API_KEY
+     - ANTHROPIC_API_KEY
+     - JIRA_EMAIL
+     - JIRA_API_TOKEN
+     - JIRA_URL
+4. Deploy and monitor status
 
-## Run in production (LangGraph Cloud)
+### Configure Automated Analysis
 
-These instructions will go over how to run EAIA in LangGraph Cloud.
-You will need a LangSmith Plus account to be able to access [LangGraph Cloud](https://langchain-ai.github.io/langgraph/concepts/langgraph_cloud/)
+Set up automated change detection:
 
-If desired, you can always run EAIA in a self-hosted manner using LangGraph Platform [Lite](https://langchain-ai.github.io/langgraph/concepts/self_hosted/#self-hosted-lite) or [Enterprise](https://langchain-ai.github.io/langgraph/concepts/self_hosted/#self-hosted-enterprise).
-
-### Set up EAIA on LangGraph Cloud
-
-1. Make sure you have a LangSmith Plus account
-2. Navigate to the deployments page in LangSmith
-3. Click `New Deployment`
-4. Connect it to your GitHub repo containing this code.
-5. Give it a name like `Executive-AI-Assistant`
-6. Add the following environment variables
-   1. `OPENAI_API_KEY`
-   2. `ANTHROPIC_API_KEY`
-   3. `GMAIL_SECRET` - This is the value in `eaia/.secrets/secrets.json`
-   4. `GMAIL_TOKEN` - This is the value in `eaia/.secrets/token.json`
-7. Click `Submit` and watch your EAIA deploy
-
-### Ingest manually
-
-Let's now kick off a manual ingest job to ingest some emails and run them through our LangGraph Cloud EAIA.
-
-First, get your `LANGGRAPH_CLOUD_URL`
-
-To kick off an ingest job, run:
-
-```shell
-python scripts/run_ingest.py --minutes-since 120 --rerun 1 --early 0 --prod ${LANGGRAPH-CLOUD-URL}
+```bash
+python scripts/setup_monitoring.py --url ${LANGGRAPH_CLOUD_URL}
 ```
 
-This will ingest all emails in the last 120 minutes (`--minutes-since`). It will NOT break early if it sees an email it already saw (`--early 0`) and it will
-rerun ones it has seen before (`--rerun 1`). It will run against the prod instance we have running (`--prod ${LANGGRAPH-CLOUD-URL}`)
+### Set up Monitoring
 
-### Set up Agent Inbox with LangGraph Cloud EAIA
+1. Configure LangSmith monitoring
+2. Set up Jira integration
+3. Enable alerting for critical changes
 
-After we have [deployed it](#set-up-eaia-on-langgraph-cloud), we can interract with any results.
+## Agent Configuration
 
-1. Go to [Agent Inbox](https://dev.agentinbox.ai/)
-2. Connect this to your locally running EAIA agent:
-   1. Click into `Settings`
-   2. Click `Add Inbox`
-      1. Set `Assistant/Graph ID` to `main`
-      2. Set `Deployment URL` to your deployment URL
-      3. Give it a name like `Prod EAIA`
-      4. Press `Submit`
+### Engineering Agent
 
-### Set up cron job
+Controls technical impact analysis:
+- System architecture assessment
+- Implementation complexity
+- Testing requirements
+- Security implications
+- Performance impact
 
-You probably don't want to manually run ingest all the time. Using LangGraph Platform, you can easily set up a cron job
-that runs on some schedule to check for new emails. You can set this up with:
+### Business Agent
 
-```shell
-python scripts/setup_cron.py --url ${LANGGRAPH-CLOUD-URL}
-```
+Manages business impact analysis:
+- Resource requirements
+- Timeline implications
+- Stakeholder impact
+- Cost assessment
+- Operational changes
+
+### Coordination Agent
+
+Orchestrates cross-team activities:
+- Change routing
+- Impact translation
+- Meeting coordination
+- Documentation tracking
+- Escalation management
 
 ## Advanced Options
 
-If you want to control more of EAIA besides what the configuration allows, you can modify parts of the code base.
+To customize Pong's behavior beyond configuration:
 
-**Reflection Logic**
-To control the prompts used for reflection (e.g. to populate memory) you can edit `eaia/reflection_graphs.py`
-
-**Triage Logic**
-To control the logic used for triaging emails you can edit `eaia/main/triage.py`
-
-**Calendar Logic**
-To control the logic used for looking at available times on the calendar you can edit `eaia/main/find_meeting_time.py`
-
-**Tone & Style Logic**
-To control the logic used for the tone and style of emails you can edit `eaia/main/rewrite.py`
-
-**Email Draft Logic**
-To control the logic used for drafting emails you can edit `eaia/main/draft_response.py`
+- Impact Analysis Logic: Edit `pong/analysis_graphs.py`
+- Coordination Logic: Edit `pong/coordination_agent.py`
+- Translation Logic: Edit `pong/translation_engine.py`
+- Integration Logic: Edit `pong/jira_integration.py`
+- Monitoring Logic: Edit `pong/langsmith_monitoring.py`
